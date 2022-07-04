@@ -6,8 +6,9 @@ import random
 class Matrix2048():
     """ core logic of the game"""
 
-    def __init__(self):
-        self.matrix = [[0 for _ in range(4)] for _ in range(4)]
+    def __init__(self, column=4):
+        self.column = column
+        self.matrix = [[0 for _ in range(self.column)] for _ in range(self.column)]
         self.score = 0
         self.init()
 
@@ -24,7 +25,7 @@ class Matrix2048():
             return number
 
         matrix = self.matrix
-        zero_coordinates = [(x, y) for x in range(4) for y in range(4) if matrix[x][y] == 0]
+        zero_coordinates = [(x, y) for x in range(self.column) for y in range(self.column) if matrix[x][y] == 0]
         if zero_coordinates:
             x, y = random.choice(zero_coordinates)
             matrix[x][y] = get_number()
@@ -36,15 +37,15 @@ class Matrix2048():
             return False
 
         # if same numbers exist adjacently in one row, game is not over
-        for i in range(4):
-            for j in range(3):
-                if self.matrix[i][j] == self.matrix[i][j+1]:
+        for i in range(self.column):
+            for j in range(self.column - 1):
+                if self.matrix[i][j] == self.matrix[i][j + 1]:
                     return False
 
         # if same numbers exist adjacently in one col, game is not over
-        for i in range(4):
-            for j in range(3):
-                if self.matrix[j][i] == self.matrix[j+1][i]:
+        for i in range(self.column):
+            for j in range(self.column - 1):
+                if self.matrix[j][i] == self.matrix[j + 1][i]:
                     return False
 
         # else game is over
@@ -53,34 +54,81 @@ class Matrix2048():
     # init game
     def init(self):
         self.score = 0
-        self.matrix = [[0 for _ in range(4)] for _ in range(4)]
+        self.matrix = [[0 for _ in range(self.column)] for _ in range(self.column)]
         self.generate_number()
         self.generate_number()
 
-    # move and merge
-    def matrix_move(self):
-        pass
+    # check if the movement is allowed
+    def check_move(self, matrix):
+        return matrix != self.matrix
 
+    # make a movement
+    def matrix_move(self, direction):
+        original_matrix = self.matrix
+        match direction:
+            case 'U':
+                self.move_up()
+            case 'D':
+                self.move_down()
+            case 'L':
+                self.move_left()
+            case 'R':
+                self.move_right()
+        if self.matrix != original_matrix:
+            self.generate_number()
+
+    # move left and merge
     def move_left(self):
-        pass
+        matrix = self.matrix
 
+        def move_left_(matrix):
+            for row in matrix:
+                row.remove(0)
+                for _ in range(self.column - len(row)):
+                    row.append(0)
+            return matrix
+
+        def merge_left(matrix):
+            for row in matrix:
+                for i in range(len(row) - 1):
+                    if row[i] == row[i + 1] and row[i] != 0:
+                        row[i] = 2 * row[i]
+                        row[i + 1] = 0
+                        self.score += row[i]
+            return matrix
+
+        matrix = move_left_(matrix)
+        matrix = merge_left(matrix)
+        matrix = move_left_(matrix)
+        self.matrix = matrix
+
+    # move right and merge
     def move_right(self):
-        pass
+        self.matrix = [row[::-1] for row in self.matrix]
+        self.move_left()
+        self.matrix = [row[::-1] for row in self.matrix]
 
-    def move_down(self):
-        pass
-
+    # move up and merge
     def move_up(self):
-        pass
+        self.matrix = [[self.matrix[y][x] for y in range(self.column)] for x in range(self.column)]
+        self.move_left()
+        self.matrix = [[self.matrix[y][x] for y in range(self.column)] for x in range(self.column)]
+
+    # move down and merge
+    def move_down(self):
+        self.matrix = [self.matrix[::-1]]
+        self.move_up()
+        self.matrix = [self.matrix[::-1]]
 
 
 class Window2048():
 
-    def __init__(self):
-        pass
+    def __init__(self, column=4):
+        self.init_setting(column)
+        self.data = Matrix2048(column)
 
     # init the settings
-    def init_setting(self):
+    def init_setting(self, column):
         pass
 
     # init the window
@@ -104,4 +152,4 @@ class Window2048():
         pass
 
 
-Matrix2048()
+Window2048(4)

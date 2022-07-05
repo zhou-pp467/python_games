@@ -1,6 +1,6 @@
 # by zhou_pp
 
-from 2048logic import Matrix
+from logic import Matrix2048
 
 
 class Window2048():

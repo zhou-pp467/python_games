@@ -13,7 +13,7 @@ class Window2048():
         self.data = Matrix2048(column)
 
         # import top 3 scores
-        self.top_scores = self.load_score()
+        self.best_score = self.load_score()
 
         # size of the board
         self.column = column
@@ -95,32 +95,45 @@ class Window2048():
             emt_score.configure(image=img)
             emt_score['image'] = img
 
-            emt_score['text'] = 'score:' + str(self.data.score)
+            emt_score['text'] = 'SCORE:' + str(self.data.score)
             emt_score['compound'] = 'center'
             self.emt_score = emt_score
             emt_score.place(x=15, y=15)
 
-            # rank top 3
+            # best score
+            top_score = tkinter.Label(master, bd=0)
+            top_score['fg'] = '#707070'
+            top_score['bg'] = self.style['page']['bg']
+            top_score['font'] = ("黑体", 30, "bold")
+            img = Image.new('RGB', (self.cell_size, self.cell_size),
+                            self.style['page']['bg'])
+            img = ImageTk.PhotoImage(img)
+            top_score.configure(image=img)
+            top_score['image'] = img
 
+            top_score['text'] = 'BEST:' + str(self.best_score)
+            top_score['compound'] = 'center'
+            self.emt_score = emt_score
+            top_score.place(x=300, y=15)
 
             master.pack()
 
         init_header(header)
 
-    # save top 3 scores
+    # save best score
     def save_score(self):
-        self.top_scores = sorted(self.top_scores.append(self.data.score))[0:3]
+        self.best_score = max(self.best_score, self.data.score)
         with open("high_score.pkl", 'wb') as f:
-            pickle.dump(str(self.top_scores), f, 0)
+            pickle.dump(str(self.best_score), f, 0)
 
-    # load top 3 scores
+    # load best score
     def load_score(self):
         try:
             with open("high_score.pkl", "rb") as f:
-                score_list = pickle.load(f)
-                return score_list
+                best_score = pickle.load(f)
+                return best_score
         except FileNotFoundError:
-            return [0, 0, 0]
+            return 0
 
     # update UI data
     def update_ui(self):

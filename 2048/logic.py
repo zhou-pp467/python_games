@@ -1,5 +1,6 @@
 # by zhou_pp
 
+import copy
 import random
 
 
@@ -63,7 +64,7 @@ class Matrix2048():
 
     # make a movement
     def matrix_move(self, direction):
-        original_matrix = self.matrix
+        original_matrix = copy.deepcopy(self.matrix)
         match direction:
             case 'U':
                 self.__move_up()
@@ -73,6 +74,7 @@ class Matrix2048():
                 self.__move_left()
             case 'R':
                 self.__move_right()
+        print(self.matrix, original_matrix,self.matrix != original_matrix)
         if self.matrix != original_matrix:
             self.__generate_number()
 
@@ -82,7 +84,8 @@ class Matrix2048():
 
         def move_left_(matrix):
             for row in matrix:
-                row.remove(0)
+                while 0 in row:
+                    row.remove(0)
                 for _ in range(self.column - len(row)):
                     row.append(0)
             return matrix
@@ -109,7 +112,6 @@ class Matrix2048():
 
     # move up and merge
     def __move_up(self):
-        print(1)
         self.matrix = [[self.matrix[y][x]
                         for y in range(self.column)]
                        for x in range(self.column)]
@@ -120,8 +122,8 @@ class Matrix2048():
 
     # move down and merge
     def __move_down(self):
-        self.matrix = [self.matrix[::-1]]
+        self.matrix = self.matrix[::-1]
         self.__move_up()
-        self.matrix = [self.matrix[::-1]]
+        self.matrix = self.matrix[::-1]
 
 

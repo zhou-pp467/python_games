@@ -74,7 +74,6 @@ class Matrix2048():
                 self.__move_left()
             case 'R':
                 self.__move_right()
-        print(self.matrix, original_matrix,self.matrix != original_matrix)
         if self.matrix != original_matrix:
             self.__generate_number()
 

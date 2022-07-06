@@ -11,21 +11,21 @@ style = {
             'page': {'bg': '#d6dee0', },
             # 0 ~ 4 background-color font-color font-size
             0: {'bg': '#EEEEEE', 'fg': '#EEEEEE', 'fz': 30},
-            2 ** 1: {'bg': '#E5E5E5', 'fg': '#707070', 'fz': 30},
-            2 ** 2: {'bg': '#D4D4D4', 'fg': '#707070', 'fz': 30},
+            2 ** 1: {'bg': '#D4D4D4', 'fg': '#707070', 'fz': 34},
+            2 ** 2: {'bg': '#9F9F9F', 'fg': '#FAFAFA', 'fz': 34},
             # 8 ～ 16 background-color font-color font-size
-            2 ** 3: {'bg': '#FFCC80', 'fg': '#FAFAFA', 'fz': 30},
-            2 ** 4: {'bg': '#FFB74D', 'fg': '#FAFAFA', 'fz': 30},
+            2 ** 3: {'bg': '#FFCC80', 'fg': '#FAFAFA', 'fz': 34},
+            2 ** 4: {'bg': '#FFB74D', 'fg': '#FAFAFA', 'fz': 34},
             # 32 ～ 64 background-color font-color font-size
-            2 ** 5: {'bg': '#FF7043', 'fg': '#FAFAFA', 'fz': 30},
-            2 ** 6: {'bg': '#FF5722', 'fg': '#FAFAFA', 'fz': 30},
+            2 ** 5: {'bg': '#FF7043', 'fg': '#FAFAFA', 'fz': 34},
+            2 ** 6: {'bg': '#FF5722', 'fg': '#FAFAFA', 'fz': 34},
             # 128～2048 background-color font-color font-size
-            2 ** 7: {'bg': '#FFEE58', 'fg': '#FAFAFA', 'fz': 30},
-            2 ** 8: {'bg': '#FFEB3B', 'fg': '#FAFAFA', 'fz': 30},
-            2 ** 9: {'bg': '#FDD835', 'fg': '#FAFAFA', 'fz': 30},
+            2 ** 7: {'bg': '#FFEE58', 'fg': '#FAFAFA', 'fz': 34},
+            2 ** 8: {'bg': '#FFEB3B', 'fg': '#FAFAFA', 'fz': 34},
+            2 ** 9: {'bg': '#FDD835', 'fg': '#FAFAFA', 'fz': 34},
             # 1024~2048 background-color font-color font-size
-            2 ** 10: {'bg': '#FF9800', 'fg': '#FAFAFA', 'fz': 30},
-            2 ** 11: {'bg': '#FB8C00', 'fg': '#FAFAFA', 'fz': 28},
+            2 ** 10: {'bg': '#FF9800', 'fg': '#FAFAFA', 'fz': 32},
+            2 ** 11: {'bg': '#FB8C00', 'fg': '#FAFAFA', 'fz': 30},
             # 4096 +  background-color font-color font-size
             2 ** 12: {'bg': '#fb3030', 'fg': '#FAFAFA', 'fz': 28},
             2 ** 13: {'bg': '#e92e2e', 'fg': '#FAFAFA', 'fz': 28},

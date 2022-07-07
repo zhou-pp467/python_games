@@ -72,11 +72,11 @@ class Window2048():
         # window
         self.root = self.init_window()
 
+        # when game over if True end game
+        self.flag = False
+
         # start the game
         self.main()
-
-        # if True end game
-        self.flag = False
 
     # init the window
     def init_window(self):

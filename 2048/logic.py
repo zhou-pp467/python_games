@@ -35,20 +35,21 @@ class Matrix2048():
 
     # check if game is over
     def game_over(self):
+        matrix = copy.deepcopy(self.matrix)
         # if there is 0 in matrix, game is not over
-        if 0 in [i for li in self.matrix for i in li]:
+        if 0 in [i for li in matrix for i in li]:
             return False
 
         # if same numbers exist adjacently in one row, game is not over
         for i in range(self.column):
             for j in range(self.column - 1):
-                if self.matrix[i][j] == self.matrix[i][j + 1]:
+                if matrix[i][j] == matrix[i][j + 1]:
                     return False
 
         # if same numbers exist adjacently in one col, game is not over
         for i in range(self.column):
             for j in range(self.column - 1):
-                if self.matrix[j][i] == self.matrix[j + 1][i]:
+                if matrix[j][i] == matrix[j + 1][i]:
                     return False
 
         # else game is over

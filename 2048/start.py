@@ -75,6 +75,9 @@ class Window2048():
         # start the game
         self.main()
 
+        # if True end game
+        self.flag = False
+
     # init the window
     def init_window(self):
         column = self.column
@@ -249,21 +252,27 @@ class Window2048():
         self.save_score()
         self.load_score()
         self.update_ui()
-        print(self.data.game_over(), self.data.matrix)
+        # print(self.data.game_over(), self.data.matrix)
+
         if self.data.game_over():
-            res = messagebox.askyesno(
-                title='肥肥的2048',
-                message=self.game_over_msg()+'\n'+'要再来一局吗？'
-            )
-            if res is True:
-                self.reset_game()
+            # if end immediately UI not updated
+            if self.flag:
+                res = messagebox.askyesno(
+                    title='肥肥的2048',
+                    message=self.game_over_msg()+'\n'+'要再来一局吗？'
+                )
+                if res is True:
+                    self.reset_game()
+                else:
+                    self.root.quit()
             else:
-                self.root.quit()
+                self.flag = True
 
     # reset game
     def reset_game(self):
         self.data.init()
         self.update_ui()
+        self.flag = False
 
     # main function
     def main(self):

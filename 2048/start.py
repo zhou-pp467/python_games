@@ -51,8 +51,11 @@ class Window2048():
         # init the matrix
         self.data = Matrix2048(column)
 
-        # import top 3 scores
+        # import best score
         self.best_score = self.load_score()
+
+        # to determine game over message
+        self.best_before = self.load_score()
 
         # size of the board
         self.column = column
@@ -217,16 +220,15 @@ class Window2048():
     def game_over_msg(self):
         if self.data.score < 4000:
             return '没有发挥好呀！'
-        elif self.data.score < 15000:
+        elif self.data.score < 13000:
             return 'emmmm......这局玩的还可以吧。'
-        elif self.data.score > self.best_score:
+        elif self.data.score > self.best_before:
             return '哇，创了新纪录哎，好厉害！'
         else:
             return '矮油，还不错哦~'
 
     # accept keyboard input
     def key_event(self, event):
-
         match event.keysym:
             case 'Up':
                 self.data.matrix_move('U')
@@ -247,7 +249,7 @@ class Window2048():
         self.save_score()
         self.load_score()
         self.update_ui()
-
+        print(self.data.game_over(), self.data.matrix)
         if self.data.game_over():
             res = messagebox.askyesno(
                 title='肥肥的2048',

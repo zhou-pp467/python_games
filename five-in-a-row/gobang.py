@@ -2,6 +2,7 @@
 
 import sys
 import random
+import copy
 import pygame
 from pygame.locals import QUIT, KEYDOWN, K_RETURN, MOUSEBUTTONDOWN
 import pygame.gfxdraw
@@ -43,13 +44,13 @@ BLUE_COLOR = (30, 30, 200)
 STONE_ICON_RADIUS = GRID_SIZE // 2 + 3
 INFO_POS_X = SCREEN_HEIGHT + 2 * STONE_ICON_RADIUS + 12
 
-# to get next stone
-offset = [(1, 0), (0, 1), (1, 1), (1, -1)]
+# to get nearby stone
+pos_diffs = [(1, 0), (0, 1), (1, 1), (1, -1)]
 
 # set player
 Player = namedtuple('Player', ['Name', 'Stone_val', 'Color'])
-black_player = Player('肥肥', 1, BLACK_STONE_COLOR)
-white_player = Player('电脑', 2, WHITE_STONE_COLOR)
+player1 = Player('肥肥', 1, BLACK_STONE_COLOR)
+player2 = Player('电脑', 2, WHITE_STONE_COLOR)
 
 # point
 Point = namedtuple('Point', ['x', 'y'])
@@ -62,7 +63,28 @@ class Board():
         self.board_matrix = [[0] * lines for _ in range(lines)]
 
     def winner(self, point, player):
-        pass
+        board_matrix = self.board_matrix
+        val = player.Stone_val
+
+        # check if five-in-a-row in each direction
+        for pos_diff in pos_diffs:
+            count = 1
+            for i in range(1, 5):
+                x = point.x + pos_diff[0] * i
+                y = point.y + pos_diff[1] * i
+                if 0 <= x < self.lines and 0 <= y < self.lines and board_matrix[y][x] == val:
+                    count += 1
+                else:
+                    break
+            for i in range(1, 5):
+                x = point.x - pos_diff[0] * i
+                y = point.y - pos_diff[1] * i
+                if 0 <= x < self.lines and 0 <= y < self.lines and board_matrix[y][x] == val:
+                    count += 1
+                else:
+                    break
+            if count >= 5:
+                return player.Name
 
     def is_empty(self, point):
         return self.board_matrix[point.y][point.x] == 0
@@ -148,7 +170,7 @@ def print_text(screen, font, x, y, text, font_color):
     screen.blit(img_text, (x, y))
 
 
-def draw_info(screen, font, cur_runner, black_win_count, white_win_count):
+def draw_info(screen, font, cur_runner, player1_win_count, player2_win_count):
     """Draw info section."""
     draw_stone(screen,
                (SCREEN_HEIGHT + STONE_ICON_RADIUS,
@@ -163,10 +185,10 @@ def draw_info(screen, font, cur_runner, black_win_count, white_win_count):
 
     print_text(screen, font, SCREEN_HEIGHT + STONE_ICON_RADIUS * 3,
                INNER_BORDER_Y_START + 4,
-               f'{black_player.Name} {"走" if cur_runner == black_player else ""}', BLUE_COLOR)
+               f'{player1.Name} {"走" if cur_runner == player1 else ""}', BLUE_COLOR)
     print_text(screen, font, SCREEN_HEIGHT + STONE_ICON_RADIUS * 3,
                INNER_BORDER_Y_START + 4 + 3 * STONE_ICON_RADIUS,
-               f'{white_player.Name} {"走" if cur_runner == white_player else ""}', BLUE_COLOR)
+               f'{player2.Name} {"走" if cur_runner == player2 else ""}', BLUE_COLOR)
 
     print_text(screen, font, SCREEN_HEIGHT,
                SCREEN_HEIGHT - MARGIN_BETWEEN_BORDER_AND_WINDOW - 8 * STONE_ICON_RADIUS,
@@ -187,12 +209,12 @@ def draw_info(screen, font, cur_runner, black_win_count, white_win_count):
 
     print_text(screen, font, SCREEN_HEIGHT + STONE_ICON_RADIUS * 3,
                SCREEN_HEIGHT - MARGIN_BETWEEN_BORDER_AND_WINDOW - 5 * STONE_ICON_RADIUS,
-               f'{black_win_count} 胜',
+               f'{player1_win_count} 胜',
                BLUE_COLOR
                )
     print_text(screen, font, SCREEN_HEIGHT + STONE_ICON_RADIUS * 3,
                SCREEN_HEIGHT - MARGIN_BETWEEN_BORDER_AND_WINDOW - 2 * STONE_ICON_RADIUS,
-               f'{white_win_count} 胜',
+               f'{player2_win_count} 胜',
                BLUE_COLOR
                )
 
@@ -215,20 +237,20 @@ def get_click_point(click_pos):
 
 def get_next(cur_player):
     """Get next player."""
-    if cur_player == black_player:
-        return white_player
+    if cur_player == player1:
+        return player2
     else:
-        return black_player
+        return player1
 
 
 # main function
 def main():
     pygame.init()
 
-    black_win_count = 0
-    white_win_count = 0
+    player1_win_count = 0
+    player2_win_count = 0
 
-    cur_player = black_player
+    cur_player = player1
     winner = None
 
     info_font = pygame.font.Font('Kaiti.ttf', 32)
@@ -242,14 +264,14 @@ def main():
     board = Board(DOTS_IN_A_LINE)
 
     # init computer player
-    computer_player = AI(DOTS_IN_A_LINE, white_player)
+    computer_player = AI(DOTS_IN_A_LINE, player2)
 
     def restart_game():
         nonlocal winner, cur_player, board, computer_player
         winner = None
-        cur_player = black_player
+        cur_player = player1
         board = Board(DOTS_IN_A_LINE)
-        computer_player = AI(DOTS_IN_A_LINE, white_player)
+        computer_player = AI(DOTS_IN_A_LINE, player2)
 
     while True:
         for event in pygame.event.get():
@@ -275,31 +297,31 @@ def main():
                                 # winner name as str
                                 winner = board.winner(point, cur_player)
                                 match winner:
-                                    case '黑方':
-                                        black_win_count += 1
-                                    case '白方':
-                                        white_win_count += 1
+                                    case '肥肥':
+                                        player1_win_count += 1
+                                    case '电脑':
+                                        player2_win_count += 1
                                     case _:
                                         cur_player = get_next(cur_player)
 
         # draw UI
         draw_board(screen)
-        draw_info(screen, info_font, cur_player, black_win_count, white_win_count)
+        draw_info(screen, info_font, cur_player, player1_win_count, player2_win_count)
         # draw stones
         for y in range(board.lines):
             for x in range(board.lines):
                 match board.board_matrix[y][x]:
-                    case black_player.Stone_val:
+                    case player1.Stone_val:
                         draw_stone(screen,
                                    (INNER_BORDER_X_START + x * GRID_SIZE, INNER_BORDER_Y_START + y * GRID_SIZE),
                                    STONE_RADIUS,
-                                   black_player.Color
+                                   player1.Color
                                    )
-                    case white_player.Stone_val:
+                    case player2.Stone_val:
                         draw_stone(screen,
                                    (INNER_BORDER_X_START + x * GRID_SIZE, INNER_BORDER_Y_START + y * GRID_SIZE),
                                    STONE_RADIUS,
-                                   white_player.Color
+                                   player2.Color
                                    )
                     case _:
                         pass

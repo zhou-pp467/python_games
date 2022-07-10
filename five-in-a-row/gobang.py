@@ -1,12 +1,13 @@
 # by zhou_pp
 
 import sys
+import random
 import pygame
 from pygame.locals import QUIT, KEYDOWN, K_RETURN, MOUSEBUTTONDOWN
 import pygame.gfxdraw
 from collections import namedtuple
 
-import AI
+from AI import AI
 
 # board size
 DOTS_IN_A_LINE = 19
@@ -47,8 +48,8 @@ offset = [(1, 0), (0, 1), (1, 1), (1, -1)]
 
 # set player
 Player = namedtuple('Player', ['Name', 'Stone_val', 'Color'])
-black_player = Player('肥肥', 1, BLACK_COLOR)
-white_player = Player('电脑', 2, WHITE_COLOR)
+black_player = Player('肥肥', 1, BLACK_STONE_COLOR)
+white_player = Player('电脑', 2, WHITE_STONE_COLOR)
 
 # point
 Point = namedtuple('Point', ['x', 'y'])
@@ -56,7 +57,18 @@ Point = namedtuple('Point', ['x', 'y'])
 
 # chess board logic
 class Board():
-    pass
+    def __init__(self, lines):
+        self.lines = lines
+        self.board_matrix = [[0] * lines for _ in range(lines)]
+
+    def winner(self, point, player):
+        pass
+
+    def is_empty(self, point):
+        return self.board_matrix[point.y][point.x] == 0
+
+    def drop(self, point, player):
+        self.board_matrix[point.y][point.x] = player.Stone_val
 
 
 def draw_board(screen):
@@ -216,7 +228,8 @@ def main():
     black_win_count = 0
     white_win_count = 0
 
-    cur_runner = black_player
+    cur_player = black_player
+    winner = None
 
     info_font = pygame.font.Font('Kaiti.ttf', 32)
     res_msg_font = pygame.font.Font('Kaiti.ttf', 74)
@@ -225,14 +238,81 @@ def main():
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption('肥肥的五子棋')
 
+    # init board
+    board = Board(DOTS_IN_A_LINE)
+
+    # init computer player
+    computer_player = AI(DOTS_IN_A_LINE, white_player)
+
+    def restart_game():
+        nonlocal winner, cur_player, board, computer_player
+        winner = None
+        cur_player = black_player
+        board = Board(DOTS_IN_A_LINE)
+        computer_player = AI(DOTS_IN_A_LINE, white_player)
+
     while True:
         for event in pygame.event.get():
+            # exit game
             if event.type == QUIT:
                 sys.exit()
+            # press enter to restart game when game over
+            elif event.type == KEYDOWN and event.key == K_RETURN:
+                if winner:
+                    restart_game()
+            # click mouse to drop stone
+            elif event.type == MOUSEBUTTONDOWN:
+                if not winner:
+                    pressed_buttons = pygame.mouse.get_pressed()
+                    if pressed_buttons[0]:
+                        pos = pygame.mouse.get_pos()
+                        point = get_click_point(pos)
+                        # point is valid
+                        if point:
+                            # point is empty
+                            if board.is_empty(point):
+                                board.drop(point, cur_player)
+                                # winner name as str
+                                winner = board.winner(point, cur_player)
+                                match winner:
+                                    case '黑方':
+                                        black_win_count += 1
+                                    case '白方':
+                                        white_win_count += 1
+                                    case _:
+                                        cur_player = get_next(cur_player)
 
         # draw UI
         draw_board(screen)
-        draw_info(screen, info_font, cur_runner, black_win_count, white_win_count)
+        draw_info(screen, info_font, cur_player, black_win_count, white_win_count)
+        # draw stones
+        for y in range(board.lines):
+            for x in range(board.lines):
+                match board.board_matrix[y][x]:
+                    case black_player.Stone_val:
+                        draw_stone(screen,
+                                   (INNER_BORDER_X_START + x * GRID_SIZE, INNER_BORDER_Y_START + y * GRID_SIZE),
+                                   STONE_RADIUS,
+                                   black_player.Color
+                                   )
+                    case white_player.Stone_val:
+                        draw_stone(screen,
+                                   (INNER_BORDER_X_START + x * GRID_SIZE, INNER_BORDER_Y_START + y * GRID_SIZE),
+                                   STONE_RADIUS,
+                                   white_player.Color
+                                   )
+                    case _:
+                        pass
+
+        if winner:
+            msg_width, msg_height = res_msg_font.size('某方获胜')
+            print_text(screen,
+                       res_msg_font,
+                       (SCREEN_WIDTH - msg_width) // 2,
+                       (SCREEN_HEIGHT - msg_height) // 2,
+                       winner + "获胜",
+                       RED_COLOR
+                       )
 
         pygame.display.flip()
 

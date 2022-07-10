@@ -2,4 +2,5 @@
 
 # computer player
 class AI():
-    pass
+    def __init__(self, lines, player):
+        pass

@@ -6,6 +6,7 @@ import copy
 import pygame
 from pygame.locals import QUIT, KEYDOWN, K_RETURN, MOUSEBUTTONDOWN
 import pygame.gfxdraw
+from tkinter import messagebox
 from collections import namedtuple
 
 from AI import AI
@@ -50,7 +51,6 @@ pos_diffs = [(1, 0), (0, 1), (1, 1), (1, -1)]
 # set player
 Player = namedtuple('Player', ['Name', 'Stone_val', 'Color'])
 player1 = Player('肥肥', 1, BLACK_STONE_COLOR)
-player2 = Player('电脑', 2, WHITE_STONE_COLOR)
 
 # point
 Point = namedtuple('Point', ['x', 'y'])
@@ -245,6 +245,9 @@ def get_next(cur_player):
 
 # main function
 def main():
+    # choose mode
+    is_ai_mode = messagebox.askokcancel(title='模式选择', message='选择人机模式吗?')
+
     pygame.init()
 
     player1_win_count = 0
@@ -263,15 +266,22 @@ def main():
     # init board
     board = Board(DOTS_IN_A_LINE)
 
-    # init computer player
-    computer_player = AI(DOTS_IN_A_LINE, player2)
+    # if create computer player
+    computer_player = None
+    global player2
+    if is_ai_mode:
+        player2 = Player('电脑', 2, WHITE_STONE_COLOR)
+        computer_player = AI(DOTS_IN_A_LINE, player2)
+    else:
+        player2 = Player('呆呆', 2, WHITE_STONE_COLOR)
 
     def restart_game():
         nonlocal winner, cur_player, board, computer_player
         winner = None
         cur_player = player1
         board = Board(DOTS_IN_A_LINE)
-        computer_player = AI(DOTS_IN_A_LINE, player2)
+        if computer_player:
+            computer_player = AI(DOTS_IN_A_LINE, player2)
 
     while True:
         for event in pygame.event.get():
@@ -297,12 +307,28 @@ def main():
                                 # winner name as str
                                 winner = board.winner(point, cur_player)
                                 match winner:
-                                    case '肥肥':
+                                    case player1.Name:
                                         player1_win_count += 1
-                                    case '电脑':
+                                    case player2.Name:
                                         player2_win_count += 1
                                     case _:
                                         cur_player = get_next(cur_player)
+
+                                        if computer_player:
+                                            computer_player.get_opponent_drop(point)
+                                            # get computer drop
+                                            computer_drop = computer_player.drop()
+                                            # drop computer drop on board
+                                            board.drop(computer_drop, cur_player)
+                                            # winner name as str
+                                            winner = board.winner(computer_drop, cur_player)
+                                            match winner:
+                                                case player1.Name:
+                                                    player1_win_count += 1
+                                                case player2.Name:
+                                                    player2_win_count += 1
+                                                case _:
+                                                    cur_player = get_next(cur_player)
 
         # draw UI
         draw_board(screen)

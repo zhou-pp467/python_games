@@ -22,7 +22,7 @@ MARGIN_BETWEEN_BORDER_AND_WINDOW = 20
 BORDER_LENGTH = (DOTS_IN_A_LINE - 1) * GRID_SIZE \
                 + 2 * (MARGIN_BETWEEN_BORDERS + OUTER_BORDER_WIDTH)
 INNER_BORDER_X_START = INNER_BORDER_Y_START = \
-    OUTER_BORDER_WIDTH + MARGIN_BETWEEN_BORDER_AND_WINDOW\
+    OUTER_BORDER_WIDTH + MARGIN_BETWEEN_BORDER_AND_WINDOW \
     + MARGIN_BETWEEN_BORDERS + int(OUTER_BORDER_WIDTH / 2)
 
 # stone radius
@@ -50,7 +50,8 @@ pos_diffs = [(1, 0), (0, 1), (1, 1), (1, -1)]
 
 # set player
 Player = namedtuple('Player', ['Name', 'Stone_val', 'Color'])
-player1 = Player('肥肥', 1, BLACK_STONE_COLOR)
+player1 = None
+player2 = None
 
 # point
 Point = namedtuple('Point', ['x', 'y'])
@@ -247,13 +248,13 @@ def get_next(cur_player):
 def main():
     # choose mode
     is_ai_mode = messagebox.askokcancel(title='模式选择', message='选择人机模式吗?')
+    is_black_player = messagebox.askokcancel(title='颜色选择', message='肥肥你选择黑方吗?')
 
     pygame.init()
 
     player1_win_count = 0
     player2_win_count = 0
 
-    cur_player = player1
     winner = None
 
     info_font = pygame.font.Font('Kaiti.ttf', 32)
@@ -266,22 +267,46 @@ def main():
     # init board
     board = Board(DOTS_IN_A_LINE)
 
-    # if create computer player
+    # create players
     computer_player = None
-    global player2
-    if is_ai_mode:
-        player2 = Player('电脑', 2, WHITE_STONE_COLOR)
-        computer_player = AI(DOTS_IN_A_LINE, player2)
-    else:
-        player2 = Player('呆呆', 2, WHITE_STONE_COLOR)
+    global player2, player1
+    match (is_ai_mode, is_black_player):
+        case (True, True):
+            player1 = Player('肥肥', 1, BLACK_STONE_COLOR)
+            player2 = Player('电脑', 2, WHITE_STONE_COLOR)
+            computer_player = AI(DOTS_IN_A_LINE, player2)
+        case (True, False):
+            player1 = Player('电脑', 1, BLACK_STONE_COLOR)
+            player2 = Player('肥肥', 2, WHITE_STONE_COLOR)
+            computer_player = AI(DOTS_IN_A_LINE, player1)
+        case (False, False):
+            player1 = Player('呆呆', 1, BLACK_STONE_COLOR)
+            player2 = Player('肥肥', 2, WHITE_STONE_COLOR)
+        case (False, True):
+            player1 = Player('肥肥', 1, BLACK_STONE_COLOR)
+            player2 = Player('呆呆', 2, WHITE_STONE_COLOR)
+
+    cur_player = player1
 
     def restart_game():
+        global player1, player2
         nonlocal winner, cur_player, board, computer_player
         winner = None
         cur_player = player1
         board = Board(DOTS_IN_A_LINE)
-        if computer_player:
+        if computer_player and is_black_player:
             computer_player = AI(DOTS_IN_A_LINE, player2)
+        elif computer_player and not is_black_player:
+            computer_player = AI(DOTS_IN_A_LINE, player1)
+            computer_drop = computer_player.drop()
+            board.drop(computer_drop, cur_player)
+            cur_player = get_next(cur_player)
+
+    # if computer drop first
+    if computer_player and not is_black_player:
+        computer_drop = computer_player.drop()
+        board.drop(computer_drop, cur_player)
+        cur_player = get_next(cur_player)
 
     while True:
         for event in pygame.event.get():

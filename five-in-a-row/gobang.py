@@ -9,8 +9,6 @@ import pygame.gfxdraw
 from tkinter import messagebox
 from collections import namedtuple
 
-from AI import AI
-
 # board size
 DOTS_IN_A_LINE = 19
 
@@ -62,6 +60,7 @@ class Board():
     def __init__(self, lines):
         self.lines = lines
         self.board_matrix = [[0] * lines for _ in range(lines)]
+        self.last_move = None
 
     def winner(self, point, player):
         board_matrix = self.board_matrix
@@ -92,6 +91,7 @@ class Board():
 
     def drop(self, point, player):
         self.board_matrix[point.y][point.x] = player.Stone_val
+        self.last_move = point
 
 
 def draw_board(screen):
@@ -244,6 +244,226 @@ def get_next(cur_player):
         return player1
 
 
+# computer player
+class AI():
+    def __init__(self, lines, player):
+        self.lines = lines
+        self.my = player
+        self.opponent = player1 if player == player2 else player2
+        self.board_matrix = [[0] * lines for _ in range(lines)]
+
+    def get_opponent_drop(self, point):
+        self.board_matrix[point.y][point.x] = self.opponent.Stone_val
+
+    def drop(self):
+        board_matrix = copy.deepcopy(self.board_matrix)
+        # if first move drop in center
+        if board_matrix == [[0] * self.lines for _ in range(self.lines)]:
+            self.board_matrix[9][9] = self.my.Stone_val
+            return Point(9, 9)
+        # choose a point to drop
+        point = None
+        score = 0
+        for i in range(self.lines):
+            for j in range(self.lines):
+                if board_matrix[j][i] == 0:
+                    _score = self.get_point_score(Point(i, j))
+                    if _score > score:
+                        score = _score
+                        point = Point(i, j)
+                    elif _score == score:
+                        if random.randint(0, 1):
+                            point = Point(i, j)
+        self.board_matrix[point.y][point.x] = self.my.Stone_val
+        return point
+
+    def get_point_score(self, point):
+        score = 0
+        for pos_diff in pos_diffs:
+            score += self.get_direction_score(point, pos_diff[0], pos_diff[1])
+        return score
+
+    def get_stone_color(self, point, x_diff, y_diff, next):
+        """Return side of point, my:1, opponent:2."""
+        x = point.x + x_diff
+        y = point.y + y_diff
+        if 0 <= x < self.lines and 0 <= y < self.lines:
+            if self.board_matrix[y][x] == self.my.Stone_val:
+                return 1
+            elif self.board_matrix[y][x] == self.opponent.Stone_val:
+                return 2
+            else:
+                # if blank, return side of next point
+                if next:
+                    return self.get_stone_color(Point(x, y), x_diff, y_diff, False)
+                else:
+                    return 0
+
+    def get_direction_score(self, point, x_diff, y_diff):
+        # continuous stones of my
+        count = 0
+        # continuous stones of opponent
+        _count = 0
+        # if space exists between my continuous stones
+        space = None
+        # if space exists between opponent continuous stones
+        _space = None
+        # blocked at ends of my continuous stones
+        end = 0
+        # blocked at ends of opponent continuous stones
+        _end = 0
+
+        # check one side of stone in direction
+        flag = self.get_stone_color(point, x_diff, y_diff, True)
+        if flag != 0:
+            for step in range(1, 6):
+                x = point.x + step * x_diff
+                y = point.y + step * y_diff
+                if 0 <= x < self.lines and 0 <= y < self.lines:
+                    if flag == 1:
+                        if self.board_matrix[y][x] == self.my.Stone_val:
+                            count += 1
+                            # space exists
+                            if space is False:
+                                space = True
+                        elif self.board_matrix[y][x] == self.opponent.Stone_val:
+                            # can block opponent
+                            _end += 1
+                            break
+                        else:
+                            # maybe generate a space
+                            if space is None:
+                                space = False
+                            # two blanks, break
+                            else:
+                                break
+                    elif flag == 2:
+                        if self.board_matrix[y][x] == self.my.Stone_val:
+                            _end += 1
+                            break
+                        elif self.board_matrix[y][x] == self.opponent.Stone_val:
+                            _count += 1
+                            # space exists
+                            if _space is False:
+                                _space = True
+                        else:
+                            # maybe generate a space
+                            if _space is None:
+                                _space = False
+                            else:
+                                # two blanks, break
+                                break
+                else:
+                    # blocked by edges
+                    if flag == 1:
+                        end += 1
+                    elif flag == 2:
+                        _end += 1
+
+        # did not generate space, reset
+        if space is False:
+            space = None
+        if _space is False:
+            space = None
+
+        # check other side of stone in direction
+        _flag = self.get_stone_color(point, -x_diff, -y_diff, True)
+        if _flag != 0:
+            for step in range(1, 6):
+                x = point.x - step * x_diff
+                y = point.y - step * y_diff
+                if 0 <= x < self.lines and 0 <= y < self.lines:
+                    if _flag == 1:
+                        if self.board_matrix[y][x] == self.my.Stone_val:
+                            count += 1
+                            if space is False:
+                                space = True
+                        elif self.board_matrix[y][x] == self.opponent.Stone_val:
+                            _end += 1
+                            break
+                        else:
+                            if space is None:
+                                space = False
+                            else:
+                                break
+                    elif _flag == 2:
+                        if self.board_matrix[y][x] == self.my.Stone_val:
+                            _end += 1
+                            break
+                        elif self.board_matrix[y][x] == self.opponent.Stone_val:
+                            _count += 1
+                            if _space is False:
+                                _space = True
+                        else:
+                            if _space is None:
+                                _space = False
+                            else:
+                                break
+                else:
+                    if _flag == 1:
+                        end += 1
+                    elif _flag == 2:
+                        _end += 1
+        # my four-in-a-row
+        if count == 4:
+            score = 10000
+        # opponent four-in-a-row
+        elif _count == 4:
+            score = 9000
+        elif count == 3:
+            # my three-in-a-row with no block
+            if end == 0:
+                score = 1000
+            # my three-in-a-row with one block
+            elif end == 1:
+                score = 100
+            # my three-in-a-row with two blocks
+            else:
+                score = 0
+        elif _count == 3:
+            # opponent three-in-a-row with no block
+            if _end == 0:
+                score = 900
+            # opponent three-in-a-row with one block
+            elif _end == 1:
+                score = 90
+            # opponent three-in-a-row with two blocks
+            else:
+                score = 0
+        elif count == 2:
+            # my two-in-a-row with no block
+            if end == 0:
+                score = 100
+            # my two-in-a-row with one block
+            elif end == 1:
+                score = 10
+            # my two-in-a-row with two blocks
+            else:
+                score = 0
+        elif _count == 2:
+            # opponent two-in-a-row with no block
+            if _end == 0:
+                score = 100
+            # opponent two-in-a-row with one block
+            elif _end == 1:
+                score = 10
+            # opponent two-in-a-row with two blocks
+            else:
+                score = 0
+        elif count == 1:
+            score = 10
+        elif _count == 1:
+            score = 9
+        else:
+            score = 0
+
+        # half of score if space exists
+        if space or _space:
+            score /= 2
+
+        return score
+
+
 # main function
 def main():
     # choose mode
@@ -376,6 +596,14 @@ def main():
                                    )
                     case _:
                         pass
+        # draw last move
+        if board.last_move:
+            draw_stone(screen,
+                       (board.last_move[0] * GRID_SIZE + INNER_BORDER_X_START,
+                        board.last_move[1] * GRID_SIZE + INNER_BORDER_Y_START),
+                       5,
+                       RED_COLOR
+                       )
 
         if winner:
             msg_width, msg_height = res_msg_font.size('某方获胜')
